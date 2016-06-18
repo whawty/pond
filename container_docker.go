@@ -42,10 +42,10 @@ func NewDockerContainer(name string) (*DockerContainer, error) {
 	return nil, errors.New("not yet implemented")
 }
 
-func (s *DockerContainer) Start() error {
+func (c *DockerContainer) Start() error {
 	return errors.New("not yet implemented")
 }
 
-func (s *DockerContainer) Stop() error {
+func (c *DockerContainer) Stop() error {
 	return errors.New("not yet implemented")
 }

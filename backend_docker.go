@@ -31,50 +31,42 @@
 package main
 
 import (
-	"io/ioutil"
-	"log"
-	"os"
-	"strings"
+	"errors"
+
+	"github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
-var (
-	wil            = log.New(os.Stdout, "[whawty.pond INFO]\t", log.LstdFlags)
-	wel            = log.New(os.Stderr, "[whawty.pond ERROR]\t", log.LstdFlags)
-	wdl            = log.New(ioutil.Discard, "[whawty.pond DEBUG]\t", log.LstdFlags)
-	enableBackends = []string{"docker"}
-)
-
-func init() {
-	if _, exists := os.LookupEnv("WHAWTY_POND_DEBUG"); exists {
-		wdl.SetOutput(os.Stderr)
-	}
-
-	if value, exists := os.LookupEnv("WHAWTY_POND_BACKENDS"); exists {
-		enableBackends = strings.Split(value, ",")
-	}
+type DockerBackend struct {
+	client *client.Client
 }
 
-func main() {
-	wil.Printf("starting")
+func NewDockerBackend() (b *DockerBackend, err error) {
+	return &DockerBackend{}, nil
+}
 
-	var backends map[string]Backend
-	backends = make(map[string]Backend)
-	for _, name := range enableBackends {
-		name = strings.TrimSpace(name)
-		backend, err := NewBackend(name)
-		if err != nil {
-			wel.Printf("Error enabling backend(%s): %v", name, err)
-			continue
-		}
-		if err := backend.Init(); err != nil {
-			wel.Printf("backend(%s): can't be enabled: %v", name, err)
-		} else {
-			backends[name] = backend
-			wil.Printf("backend(%s): successfully enabled/initialized", name)
-		}
+func (b *DockerBackend) Init() (err error) {
+	if b.client, err = client.NewEnvClient(); err != nil {
+		return
 	}
-	if len(backends) == 0 {
-		wel.Printf("no backends are enabled, exitting...")
-		os.Exit(1)
+
+	var info types.Info
+	if info, err = b.client.Info(context.Background()); err != nil {
+		return err
 	}
+
+	wdl.Printf("docker connected to: %s (Version: %s), Root-Dir: %s, Driver: %s, %d CPUs, Memory: %d", info.Name, info.ServerVersion, info.DockerRootDir, info.Driver, info.NCPU, info.MemTotal)
+	return
+}
+
+func (b *DockerBackend) Cleanup() error {
+	// TODO: search for dangeling images and remove them
+	// this might be unsafe during image build... needs investigation!!!
+	return errors.New("not yet implemented")
+}
+
+func (b *DockerBackend) GetClient() (Client *client.Client, err error) {
+	// TODO: check if connection is alive and reconnect if not
+	return b.client, nil
 }

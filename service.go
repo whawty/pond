@@ -37,9 +37,18 @@ import (
 type Service struct {
 	Name       string
 	VolumePath string
+	Images     map[string]*Image
 }
 
-func (s *Service) AddImage(imagetype, name, version string) (*Image, error) {
+func NewService(name, volumePath string) (s *Service, err error) {
+	s = &Service{}
+	s.Name = name
+	s.VolumePath = volumePath
+	s.Images = make(map[string]*Image)
+	return
+}
+
+func (s *Service) AddImage(backend, name, version string) (*Image, error) {
 	return nil, errors.New("not yet implemented")
 }
 

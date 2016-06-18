@@ -36,17 +36,24 @@ import (
 
 type DockerImage struct {
 	Name    string
-	version string
+	Version string
+	docker  *DockerBackend
+	ID      string
+	// add info to rebuild image
 }
 
-func NewDockerImage(name, version string) (*DockerImage, error) {
-	return nil, errors.New("not yet implemented")
+func NewDockerImage(docker *DockerBackend, name, version string) (img *DockerImage, err error) {
+	img = &DockerImage{}
+	img.Name = name
+	img.Version = version
+	img.docker = docker
+	return
 }
 
-func (s *DockerImage) Rebuild() error {
+func (i *DockerImage) Rebuild() error {
 	return errors.New("not yet implemented")
 }
 
-func (s *DockerImage) NewContainer(name string) (*Container, error) {
+func (i *DockerImage) NewContainer(name string) (*Container, error) {
 	return nil, errors.New("not yet implemented")
 }
