@@ -30,7 +30,20 @@
 
 package main
 
+import (
+	"errors"
+)
+
 type Image interface {
+	Exists() (bool, error)
 	Rebuild() error
 	NewContainer(name string) (*Container, error)
+}
+
+func NewImage(backend, name, version string) (i Image, err error) {
+	switch name {
+	case "docker":
+		return NewDockerImage(nil, name, version)
+	}
+	return nil, errors.New("unknown backend type")
 }

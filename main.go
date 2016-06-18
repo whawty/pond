@@ -34,6 +34,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
+	"regexp"
 	"strings"
 )
 
@@ -42,6 +44,8 @@ var (
 	wel            = log.New(os.Stderr, "[whawty.pond ERROR]\t", log.LstdFlags)
 	wdl            = log.New(ioutil.Discard, "[whawty.pond DEBUG]\t", log.LstdFlags)
 	enableBackends = []string{"docker"}
+	volumeBasePath = "/srv/volumes"
+	serviceNameRe  = regexp.MustCompile("^[-_.A-Za-z0-9]+$")
 )
 
 func init() {
@@ -52,13 +56,24 @@ func init() {
 	if value, exists := os.LookupEnv("WHAWTY_POND_BACKENDS"); exists {
 		enableBackends = strings.Split(value, ",")
 	}
+
+	if value, exists := os.LookupEnv("WHAWTY_POND_VOLUMES_BASE"); exists {
+		volumeBasePath = value
+	}
+}
+
+type Context struct {
+	Backends map[string]Backend
+	Services map[string]*Service
 }
 
 func main() {
 	wil.Printf("starting")
 
-	var backends map[string]Backend
-	backends = make(map[string]Backend)
+	var ctx Context
+	ctx.Backends = make(map[string]Backend)
+	ctx.Services = make(map[string]*Service)
+
 	for _, name := range enableBackends {
 		name = strings.TrimSpace(name)
 		backend, err := NewBackend(name)
@@ -69,12 +84,36 @@ func main() {
 		if err := backend.Init(); err != nil {
 			wel.Printf("backend(%s): can't be enabled: %v", name, err)
 		} else {
-			backends[name] = backend
+			ctx.Backends[name] = backend
 			wil.Printf("backend(%s): successfully enabled/initialized", name)
 		}
 	}
-	if len(backends) == 0 {
+	if len(ctx.Backends) == 0 {
 		wel.Printf("no backends are enabled, exitting...")
 		os.Exit(1)
+	}
+
+	// TODO: get this from db/config backend
+	var svc_name = "hugo"
+	// if !serviceNameRe.MatchString(svc_name) {
+	// 	wel.Printf("service name is invalid")
+	// 	os.Exit(2)
+	// }
+	// if _, exists := ctx.Services[svc_name]; exists {
+	// 	wel.Printf("Error adding new Service(%s): already exists", svc_name)
+	// 	os.Exit(2)
+	// }
+
+	svc, err := NewService(svc_name, path.Join(volumeBasePath, svc_name, "shared"))
+	if err != nil {
+		wel.Printf("Error adding new Service(%s): %v", svc_name, err)
+		os.Exit(2)
+	}
+
+	ctx.Services[svc_name] = svc
+
+	wdl.Printf("Services:")
+	for name, svc := range ctx.Services {
+		wdl.Printf(" - %s: %+v", name, *svc)
 	}
 }

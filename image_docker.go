@@ -47,7 +47,14 @@ func NewDockerImage(docker *DockerBackend, name, version string) (img *DockerIma
 	img.Name = name
 	img.Version = version
 	img.docker = docker
+
+	// TODO search in backend if image already exists and set img.ID
+
 	return
+}
+
+func (i *DockerImage) Exists() (bool, error) {
+	return false, errors.New("not yet implemented")
 }
 
 func (i *DockerImage) Rebuild() error {

@@ -38,36 +38,75 @@ type Service struct {
 	Name       string
 	VolumePath string
 	Images     map[string]*Image
+	Container  map[string]*Container
 }
 
+// Service Handling
 func NewService(name, volumePath string) (s *Service, err error) {
 	s = &Service{}
 	s.Name = name
 	s.VolumePath = volumePath
 	s.Images = make(map[string]*Image)
+	s.Container = make(map[string]*Container)
 	return
 }
 
-func (s *Service) AddImage(backend, name, version string) (*Image, error) {
-	return nil, errors.New("not yet implemented")
-}
-
-func (s *Service) FindImage(name, version string) (*Image, error) {
-	return nil, errors.New("not yet implemented")
-}
-
-func (s *Service) RemoveImage(name, version string) error {
-	return errors.New("not yet implemented")
-}
-
+// Start all Container of the Service
 func (s *Service) Start() error {
 	return errors.New("not yet implemented")
 }
 
+// Stop all Container of the Service
 func (s *Service) Stop() error {
 	return errors.New("not yet implemented")
 }
 
+// Rebuild all Images and Restart Container
 func (s *Service) RebuildAndRestart() error {
+	return errors.New("not yet implemented")
+}
+
+// Remove all Container and Images of this Service
+func (s *Service) Wipe() error {
+	return errors.New("not yet implemented")
+}
+
+// Add an Image to the Service (build if it not exists in backend)
+func (s *Service) AddImage(backend, name, version string) (Image, error) {
+	return nil, errors.New("not yet implemented")
+}
+
+// Return the image with <name>:<version>
+func (s *Service) GetImage(name, version string) (Image, error) {
+	return nil, errors.New("not yet implemented")
+}
+
+// Remove the image from the backend
+func (s *Service) RemoveImage(name, version string) error {
+	return errors.New("not yet implemented")
+}
+
+// Add a container based on <image>
+func (s *Service) AddContainer(image, name string) (Container, error) {
+	return nil, errors.New("not yet implemented")
+}
+
+// Return the container with name <name>
+func (s *Service) GetContainer(name string) (Container, error) {
+	return nil, errors.New("not yet implemented")
+}
+
+// Remove the Container <name> from the service
+func (s *Service) RemoveContainer(name string) error {
+	return errors.New("not yet implemented")
+}
+
+// Start Container with name <name>
+func (s *Service) StartContainer(name string) error {
+	return errors.New("not yet implemented")
+}
+
+// Stop Container with name <name>
+func (s *Service) StopContainer(name string) error {
 	return errors.New("not yet implemented")
 }
