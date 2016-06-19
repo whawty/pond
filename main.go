@@ -108,28 +108,4 @@ func main() {
 
 	<-stop
 	wil.Printf("at least one control interface has stopped - bringing down the whole process")
-
-	// TODO: get this from db/config backend
-	// var svc_name = "hugo"
-	// if !serviceNameRe.MatchString(svc_name) {
-	// 	wel.Printf("service name is invalid")
-	// 	os.Exit(2)
-	// }
-	// if _, exists := ctx.Services[svc_name]; exists {
-	// 	wel.Printf("Error adding new Service(%s): already exists", svc_name)
-	// 	os.Exit(2)
-	// }
-
-	// svc, err := NewService(svc_name, path.Join(volumeBasePath, svc_name, "shared"))
-	// if err != nil {
-	// 	wel.Printf("Error adding new Service(%s): %v", svc_name, err)
-	// 	os.Exit(2)
-	// }
-
-	// ctx.Services[svc_name] = svc
-
-	// wdl.Printf("Services:")
-	// for name, svc := range ctx.Services {
-	// 	wdl.Printf(" - %s: %+v", name, *svc)
-	// }
 }
