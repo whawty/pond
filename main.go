@@ -34,7 +34,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	//	"path"
 	"regexp"
 	"strings"
 )
@@ -46,6 +46,7 @@ var (
 	enableBackends = []string{"docker"}
 	volumeBasePath = "/srv/volumes"
 	serviceNameRe  = regexp.MustCompile("^[-_.A-Za-z0-9]+$")
+	telnetAddr     = "127.0.0.1:9023"
 )
 
 func init() {
@@ -93,8 +94,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	stop := make(chan bool)
+
+	if telnetAddr != "" {
+		telnet := TelnetInit(telnetAddr, &ctx)
+		go func() {
+			wil.Printf("starting telnet interface (%s)", telnetAddr)
+			telnet.Run()
+			wil.Printf("telnet interface just stopped")
+			stop <- true
+		}()
+	}
+
+	<-stop
+	wil.Printf("at least one control interface has stopped - bringing down the whole process")
+
 	// TODO: get this from db/config backend
-	var svc_name = "hugo"
+	// var svc_name = "hugo"
 	// if !serviceNameRe.MatchString(svc_name) {
 	// 	wel.Printf("service name is invalid")
 	// 	os.Exit(2)
@@ -104,16 +120,16 @@ func main() {
 	// 	os.Exit(2)
 	// }
 
-	svc, err := NewService(svc_name, path.Join(volumeBasePath, svc_name, "shared"))
-	if err != nil {
-		wel.Printf("Error adding new Service(%s): %v", svc_name, err)
-		os.Exit(2)
-	}
+	// svc, err := NewService(svc_name, path.Join(volumeBasePath, svc_name, "shared"))
+	// if err != nil {
+	// 	wel.Printf("Error adding new Service(%s): %v", svc_name, err)
+	// 	os.Exit(2)
+	// }
 
-	ctx.Services[svc_name] = svc
+	// ctx.Services[svc_name] = svc
 
-	wdl.Printf("Services:")
-	for name, svc := range ctx.Services {
-		wdl.Printf(" - %s: %+v", name, *svc)
-	}
+	// wdl.Printf("Services:")
+	// for name, svc := range ctx.Services {
+	// 	wdl.Printf(" - %s: %+v", name, *svc)
+	// }
 }
