@@ -41,6 +41,35 @@ type TelnetInterface struct {
 	server *telgo.Server
 }
 
+type TelnetClientContext struct {
+	current_service string
+}
+
+func telnetClientSelectService(c *telgo.Client, name string) {
+	if c.UserData == nil {
+		c.UserData = &TelnetClientContext{}
+	}
+	(c.UserData.(*TelnetClientContext)).current_service = name
+	c.Prompt = name
+	if name != "" {
+		c.Prompt += " % "
+	}
+}
+
+func telnetClientGetSelectedService(c *telgo.Client, ctx *Context) *Service {
+	if c.UserData == nil {
+		return nil
+	}
+	name := (c.UserData.(*TelnetClientContext)).current_service
+	svc, exists := ctx.Services[name]
+	if !exists {
+		c.Sayln("selected service '%s' has vanished", name)
+		telnetClientSelectService(c, "")
+		return nil
+	}
+	return svc
+}
+
 func telnetAddService(c *telgo.Client, name string, args []string, ctx *Context) bool {
 	_, err := ctx.NewService(name, path.Join(volumeBasePath, name, "shared"))
 	if err != nil {
@@ -52,6 +81,7 @@ func telnetAddService(c *telgo.Client, name string, args []string, ctx *Context)
 }
 
 func telnetRemoveService(c *telgo.Client, name string, args []string, ctx *Context) bool {
+	//	delete(ctx.Services, name)
 	c.Sayln("remove service %s: not yet implemented (args: %+v)", name, args)
 	return false
 }
@@ -100,10 +130,35 @@ func telnetShow(c *telgo.Client, args []string, ctx *Context) bool {
 				c.Sayln(" - %s: %+v", name, *svc)
 			}
 			return false
+		case "images":
+			svc := telnetClientGetSelectedService(c, ctx)
+			if svc == nil {
+				c.Sayln("please select a service")
+				return false
+			}
+			c.Sayln("Images:")
+			for name, img := range svc.Images {
+				c.Sayln(" - %s (type: %T): %+v", name, img, img)
+			}
+			return false
 		default:
 			c.Sayln("unknown type")
 		}
-		fallthrough
+	default:
+		c.Sayln("too few arguments")
+	}
+	return false
+
+}
+
+func telnetSelect(c *telgo.Client, args []string, ctx *Context) bool {
+	switch len(args) {
+	case 2:
+		if _, exists := ctx.Services[args[1]]; !exists {
+			c.Sayln("service '%s' does not exist", args[1])
+			return false
+		}
+		telnetClientSelectService(c, args[1])
 	default:
 		c.Sayln("too few arguments")
 	}
@@ -123,12 +178,16 @@ func telnetHelp(c *telgo.Client, args []string) bool {
 			c.Sayln("usage: help [ <cmd> ]")
 			c.Sayln("   prints command overview or detailed info to <cmd>.")
 			return false
+		case "show":
+			c.Sayln("usage: show (services|images|container)")
+			c.Sayln("   ...tba...")
+			return false
 		case "service":
 			c.Sayln("usage: service (add|remove|start|stop) <name>")
 			c.Sayln("   ...tba...")
 			return false
-		case "show":
-			c.Sayln("usage: show (services)")
+		case "select":
+			c.Sayln("usage: select <service-name>")
 			c.Sayln("   ...tba...")
 			return false
 		}
@@ -138,8 +197,9 @@ func telnetHelp(c *telgo.Client, args []string) bool {
 		c.Sayln("  available commands:")
 		c.Sayln("    quit                              close connection (or use Ctrl-D)")
 		c.Sayln("    help [ <cmd> ]                    print this, or help for specific command")
+		c.Sayln("    show (services|images)            list all services or images")
 		c.Sayln("    service <cmd> <name> [ <args..> ] manage services")
-		c.Sayln("    show services                     list all services")
+		c.Sayln("    select <service-name>             select service to manage")
 	}
 	return false
 }
@@ -161,8 +221,9 @@ func TelnetInit(addr string, ctx *Context) (telnet *TelnetInterface) {
 	cmdlist := make(telgo.CmdList)
 	cmdlist["help"] = telnetHelp
 	cmdlist["quit"] = telnetQuit
-	cmdlist["service"] = func(c *telgo.Client, args []string) bool { return telnetService(c, args, ctx) }
 	cmdlist["show"] = func(c *telgo.Client, args []string) bool { return telnetShow(c, args, ctx) }
+	cmdlist["service"] = func(c *telgo.Client, args []string) bool { return telnetService(c, args, ctx) }
+	cmdlist["select"] = func(c *telgo.Client, args []string) bool { return telnetSelect(c, args, ctx) }
 
 	telnet.server = telgo.NewServer(addr, "pond> ", cmdlist, nil)
 
