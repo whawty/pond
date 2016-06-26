@@ -40,10 +40,14 @@ type Image interface {
 	NewContainer(name string) (*Container, error)
 }
 
-func NewImage(backend, name, version string) (i Image, err error) {
+func NewImage(svc *Service, backend, name, version string) (i Image, err error) {
+	if _, exists := svc.ctx.Backends[backend]; !exists {
+		return nil, errors.New("unknown backend type")
+	}
+
 	switch name {
 	case "docker":
-		return NewDockerImage(nil, name, version)
+		return NewDockerImage(svc.ctx.Backends[name].(*DockerBackend), svc, name, version)
 	}
 	return nil, errors.New("unknown backend type")
 }

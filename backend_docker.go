@@ -70,3 +70,15 @@ func (b *DockerBackend) GetClient() (Client *client.Client, err error) {
 	// TODO: check if connection is alive and reconnect if not
 	return b.client, nil
 }
+
+func (b *DockerBackend) ImageGet(service, name, version string) (types.Image, error) {
+	opts := types.ImageListOptions{MatchName: service + "/" + name + ":" + version}
+	il, err := b.client.ImageList(context.Background(), opts)
+	if err != nil {
+		return types.Image{}, err
+	}
+	if len(il) == 1 {
+		return il[0], nil
+	}
+	return types.Image{}, errors.New("no or more than one images found")
+}

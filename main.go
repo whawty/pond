@@ -63,17 +63,14 @@ func init() {
 	}
 }
 
-type Context struct {
-	Backends map[string]Backend
-	Services map[string]*Service
-}
-
 func main() {
 	wil.Printf("starting")
 
 	var ctx Context
-	ctx.Backends = make(map[string]Backend)
-	ctx.Services = make(map[string]*Service)
+	if err := ctx.Init(); err != nil {
+		wel.Printf("Error initalizing pond context: %v", err)
+		os.Exit(1)
+	}
 
 	for _, name := range enableBackends {
 		name = strings.TrimSpace(name)

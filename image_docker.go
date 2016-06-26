@@ -32,29 +32,36 @@ package main
 
 import (
 	"errors"
+
+	"github.com/docker/engine-api/types"
 )
 
 type DockerImage struct {
-	Name    string
-	Version string
-	docker  *DockerBackend
-	ID      string
+	service  *Service
+	Name     string
+	Version  string
+	docker   *DockerBackend
+	instance types.Image
 	// add info to rebuild image
 }
 
-func NewDockerImage(docker *DockerBackend, name, version string) (img *DockerImage, err error) {
+func NewDockerImage(docker *DockerBackend, svc *Service, name, version string) (img *DockerImage, err error) {
 	img = &DockerImage{}
 	img.Name = name
 	img.Version = version
 	img.docker = docker
 
-	// TODO search in backend if image already exists and set img.ID
-
+	_, err = img.Exists()
 	return
 }
 
 func (i *DockerImage) Exists() (bool, error) {
-	return false, errors.New("not yet implemented")
+	di, err := i.docker.ImageGet(i.service.Name, i.Name, i.Version)
+	if err != nil {
+		return false, err
+	}
+	i.instance = di
+	return true, nil
 }
 
 func (i *DockerImage) Rebuild() error {

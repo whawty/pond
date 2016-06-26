@@ -35,20 +35,11 @@ import (
 )
 
 type Service struct {
+	ctx        *Context
 	Name       string
 	VolumePath string
-	Images     map[string]*Image
-	Container  map[string]*Container
-}
-
-// Service Handling
-func NewService(name, volumePath string) (s *Service, err error) {
-	s = &Service{}
-	s.Name = name
-	s.VolumePath = volumePath
-	s.Images = make(map[string]*Image)
-	s.Container = make(map[string]*Container)
-	return
+	Images     map[string]Image
+	Container  map[string]Container
 }
 
 // Start all Container of the Service
@@ -72,13 +63,23 @@ func (s *Service) Wipe() error {
 }
 
 // Add an Image to the Service (build if it not exists in backend)
-func (s *Service) AddImage(backend, name, version string) (Image, error) {
-	return nil, errors.New("not yet implemented")
+func (s *Service) AddImage(backend, name, version string) (i Image, err error) {
+	if i, err = NewImage(s, backend, name, version); err != nil {
+		return
+	}
+	if exists, err := i.Exists(); exists {
+		return nil, err
+	}
+	err = i.Rebuild()
+	return
 }
 
 // Return the image with <name>:<version>
 func (s *Service) GetImage(name, version string) (Image, error) {
-	return nil, errors.New("not yet implemented")
+	if i, exists := s.Images[name]; exists {
+		return i, nil
+	}
+	return nil, errors.New("image doesn't exist")
 }
 
 // Remove the image from the backend

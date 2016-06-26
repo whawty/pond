@@ -42,16 +42,11 @@ type TelnetInterface struct {
 }
 
 func telnetAddService(c *telgo.Client, name string, args []string, ctx *Context) bool {
-	if _, exists := ctx.Services[name]; exists {
-		c.Sayln("failed to add service '%s': already exists", name)
-		return false
-	}
-	svc, err := NewService(name, path.Join(volumeBasePath, name, "shared"))
+	_, err := ctx.NewService(name, path.Join(volumeBasePath, name, "shared"))
 	if err != nil {
 		c.Sayln("failed to add service '%s': %v", name, err)
 		return false
 	}
-	ctx.Services[name] = svc
 	c.Sayln("service '%s' successfully added", name)
 	return false
 }
